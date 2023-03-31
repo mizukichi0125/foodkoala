@@ -1,17 +1,17 @@
 import styles from '../../styles/Shop.module.css';
 import type { Shop } from 'types/shops';
 import { useEffect, useState } from 'react';
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';
-import { userId } from 'lib/UserId';
+import Cookies from 'js-cookie';
 
 export default function FavoriteButton({ shop }: { shop: Shop }) {
   const [heart, setHeart] = useState('shop_favorite_false');
   const router = useRouter();
+  const userId = Cookies.get('user_id');
   //ページ遷移時にログイン前の場合はお気に入りボタンをグレーに。ログイン後の場合はshop_idとuser_idが一致するデータがfavoriteテーブルに存在するか確認してCSSを切り替え。
   useEffect((): void => {
     if (userId === undefined || userId === null) {
-      setHeart('shop_favorite_false');
+      setHeart('shop_favorite_false_start');
     } else {
       fetch(
         `/api/favorite_button?shop_id=eq.${shop.id}&user_id=eq.${userId}`,
@@ -24,15 +24,14 @@ export default function FavoriteButton({ shop }: { shop: Shop }) {
       )
         .then((res) => res.json())
         .then((data) => {
-          console.log('data', data);
           if (data.length === 0) {
             setHeart('shop_favorite_false');
           } else {
-            setHeart('shop_favorite_true');
+            setHeart('shop_favorite_true_start');
           }
         });
     }
-  }, [shop.id]);
+  }, [shop.id, userId]);
 
   //ログイン前はonClickでログイン画面に切り替え。ログイン後はcheckFavoriteを呼び出し
   function handleClick() {
@@ -83,6 +82,7 @@ export default function FavoriteButton({ shop }: { shop: Shop }) {
     )
       .then((response) => {
         if (response.ok) {
+          console.log('response', response);
           setHeart('shop_favorite_true');
         }
       })
@@ -114,16 +114,14 @@ export default function FavoriteButton({ shop }: { shop: Shop }) {
 
   //ハートボタンの表示
   return (
-    <>
-      <div className={styles[heart]}>
-        <button
-          type="button"
-          onClick={handleClick}
-          data-testid={'favorite'}
-        >
-          <i className="fa-solid fa-heart"></i>
-        </button>
-      </div>
-    </>
+    <div className={`${styles[heart]}`}>
+      <button
+        type="button"
+        onClick={handleClick}
+        data-testid={'favorite'}
+      >
+        <i className="fa-solid fa-heart"></i>
+      </button>
+    </div>
   );
 }
